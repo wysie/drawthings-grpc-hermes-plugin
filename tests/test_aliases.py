@@ -54,3 +54,28 @@ def test_alias_resolution_and_defaults(monkeypatch, tmp_path):
     assert client.generation_defaults(models[0], loras[1])["steps"] == 4
     assert client.generation_defaults(models[0], loras[1])["cfg"] == 1.0
     assert client.plugin_config()["default_model"] == "qwen-image-2512"
+
+
+def test_synthesizes_configured_loras_when_echo_omits_metadata(monkeypatch, tmp_path):
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes-home"))
+    client = load_plugin_client()
+    models = [{"name": "Qwen Image 2512", "file": "qwen_image_2512_q8p.ckpt", "version": "qwen_image"}]
+    monkeypatch.setattr(
+        client,
+        "_existing_files",
+        lambda files: {"wuli_qwen_image_2512_turbo_lora_4steps_v3.0_bf16_lora_f16.ckpt"},
+    )
+
+    loras = client._synthetic_loras_from_config(models)
+
+    assert loras == [
+        {
+            "name": "Qwen Turbo V3",
+            "file": "wuli_qwen_image_2512_turbo_lora_4steps_v3.0_bf16_lora_f16.ckpt",
+            "version": "qwen_image",
+            "synthetic": True,
+            "source": "config+FilesExist",
+        }
+    ]
+    assert client.resolve(loras, "qwen-turbo-v3")["file"] == "wuli_qwen_image_2512_turbo_lora_4steps_v3.0_bf16_lora_f16.ckpt"
+    assert client.generation_defaults(models[0], loras[0])["steps"] == 4

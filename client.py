@@ -192,11 +192,71 @@ def aliases_for(item: dict[str, Any]) -> list[str]:
     return sorted(a for a in aliases if a)
 
 
+def _configured_lora_files(cfg: dict[str, Any] | None = None) -> list[str]:
+    """Return LoRA files the user/config knows about.
+
+    Draw Things gRPC Echo can return an empty LoRA metadata list even while
+    FilesExist/GenerateImage can see and use the LoRA files. Keep config as the
+    source of truth for those known files, but verify existence before exposing
+    them.
+    """
+    cfg = cfg or plugin_config()
+    files: set[str] = set()
+    for file in (cfg.get("lora_defaults") or {}).keys():
+        if isinstance(file, str) and file:
+            files.add(file)
+    for target in (cfg.get("aliases") or {}).values():
+        if isinstance(target, str) and "lora" in target.lower():
+            files.add(target)
+    return sorted(files)
+
+
+def _existing_files(files: list[str]) -> set[str]:
+    if not files:
+        return set()
+    try:
+        resp = _stub().FilesExist(imageService_pb2.FileListRequest(files=files), timeout=30)
+        return {f for f, exists in zip(resp.files, resp.existences) if exists}
+    except Exception:
+        return set()
+
+
+def _synthetic_loras_from_config(models: list[dict[str, Any]], cfg: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    cfg = cfg or plugin_config()
+    existing = _existing_files(_configured_lora_files(cfg))
+    if not existing:
+        return []
+    default_model = cfg.get("default_model")
+    version = None
+    if default_model:
+        try:
+            version = resolve(models, str(default_model), default_first=True).get("version")
+        except Exception:
+            version = None
+    out = []
+    for file in sorted(existing):
+        aliases = [alias for alias, target in (cfg.get("aliases") or {}).items() if target == file]
+        friendly = aliases[0] if aliases else re.sub(r"\.(ckpt|safetensors|bin)$", "", file, flags=re.I)
+        out.append({
+            "name": friendly.replace("-", " ").replace("_", " ").title(),
+            "file": file,
+            "version": version,
+            "synthetic": True,
+            "source": "config+FilesExist",
+        })
+    return out
+
+
 def inventory() -> Inventory:
     resp = _stub().Echo(imageService_pb2.EchoRequest(name="Agent Hammy"), timeout=30)
+    models = _json_load_bytes(resp.override.models)
+    loras = _json_load_bytes(resp.override.loras)
+    synthetic_loras = _synthetic_loras_from_config(models)
+    seen_lora_files = {x.get("file") for x in loras}
+    loras.extend(x for x in synthetic_loras if x.get("file") not in seen_lora_files)
     return Inventory(
-        models=_json_load_bytes(resp.override.models),
-        loras=_json_load_bytes(resp.override.loras),
+        models=models,
+        loras=loras,
         controlnets=_json_load_bytes(resp.override.controlNets),
         upscalers=_json_load_bytes(resp.override.upscalers),
         textual_inversions=_json_load_bytes(resp.override.textualInversions),
