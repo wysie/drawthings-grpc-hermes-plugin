@@ -2,6 +2,8 @@ import importlib.util
 import pathlib
 import sys
 
+import pytest
+
 
 def load_plugin_client():
     root = pathlib.Path(__file__).resolve().parents[1]
@@ -79,3 +81,30 @@ def test_synthesizes_configured_loras_when_echo_omits_metadata(monkeypatch, tmp_
     ]
     assert client.resolve(loras, "qwen-turbo-v3")["file"] == "wuli_qwen_image_2512_turbo_lora_4steps_v3.0_bf16_lora_f16.ckpt"
     assert client.generation_defaults(models[0], loras[0])["steps"] == 4
+
+
+def test_refuses_synthetic_lora_for_generation(monkeypatch, tmp_path):
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes-home"))
+    client = load_plugin_client()
+    monkeypatch.setattr(
+        client,
+        "inventory",
+        lambda: client.Inventory(
+            models=[{"name": "Qwen Image 2512", "file": "qwen_image_2512_q8p.ckpt", "version": "qwen_image"}],
+            loras=[
+                {
+                    "name": "Qwen Lightning",
+                    "file": "qwen_image_2512_lightning_4_step_v1.0_lora_f16.ckpt",
+                    "version": "qwen_image",
+                    "synthetic": True,
+                    "source": "config+FilesExist",
+                }
+            ],
+            controlnets=[],
+            upscalers=[],
+            textual_inversions=[],
+        ),
+    )
+
+    with pytest.raises(ValueError, match="refusing to generate with synthetic LoRA"):
+        client.generate_image({"prompt": "apple", "model": "qwen-image-2512", "lora": "qwen-lightning"})

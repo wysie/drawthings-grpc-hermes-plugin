@@ -375,6 +375,12 @@ def generate_image(args: dict[str, Any]) -> dict[str, Any]:
     if isinstance(selected_lora, str) and selected_lora.strip().lower() in {"", "none", "null", "false", "off"}:
         selected_lora = None
     lora = resolve(inv.loras, selected_lora) if selected_lora else None
+    if lora and lora.get("synthetic"):
+        raise ValueError(
+            "LoRA metadata is missing from Draw Things Echo; refusing to generate with "
+            f"synthetic LoRA '{selected_lora}' because Draw Things may ignore it. "
+            "Fix the gRPC server/model-browser LoRA inventory first."
+        )
 
     width = _safe_dim(args.get("width", 1024))
     height = _safe_dim(args.get("height", 1024))
