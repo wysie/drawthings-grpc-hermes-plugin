@@ -1,5 +1,7 @@
 # Draw Things gRPC plugin for Hermes Agent
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H1ZAPL)
+
 Local/private image generation through Draw Things' gRPC server. This plugin intentionally does **not** replace Hermes Agent's default cloud image generation provider. Use it only when the user explicitly asks for Draw Things, local image generation, or a local model/LoRA such as Qwen Image, Z Image, ERNIE, FLUX, RealVisXL, Juggernaut, or FaceID/IP-Adapter workflows.
 
 ## What this does
