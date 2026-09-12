@@ -14,10 +14,10 @@ import grpc
 import numpy as np
 from PIL import Image
 
-try:
+if __package__:
     from .generated import imageService_pb2, imageService_pb2_grpc
     from .generated.config_generated import GenerationConfigurationT, LoRAT, LoRAMode, SamplerType, SeedMode
-except ImportError:  # Allows pytest/direct import from plugin root.
+else:  # Allows direct execution from the plugin root.
     from generated import imageService_pb2, imageService_pb2_grpc  # type: ignore
     from generated.config_generated import GenerationConfigurationT, LoRAT, LoRAMode, SamplerType, SeedMode  # type: ignore
 

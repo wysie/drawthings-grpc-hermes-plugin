@@ -32,6 +32,7 @@ It will not install Hugging Face files, mutate your Draw Things model library, o
 - Draw Things with the gRPC server enabled.
 - Python dependencies available in the Hermes environment:
   - `grpcio`
+  - `protobuf`
   - `flatbuffers`
   - `fpzip`
   - `numpy`
@@ -40,7 +41,7 @@ It will not install Hugging Face files, mutate your Draw Things model library, o
 Install missing dependencies into Hermes' venv, for example:
 
 ```bash
-~/.hermes/hermes-agent/venv/bin/python3 -m pip install grpcio flatbuffers fpzip numpy Pillow
+~/.hermes/hermes-agent/venv/bin/python3 -m pip install grpcio protobuf flatbuffers fpzip numpy Pillow
 ```
 
 ## Install

@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 import traceback
 
-try:
+if __package__:
     from . import client
-except ImportError:  # Allows pytest/direct import from plugin root.
+else:  # Allows direct execution from the plugin root.
     import client  # type: ignore
 
 

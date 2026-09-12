@@ -4,19 +4,26 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "drawthings-grpc-hermes-plugin"
-version = "0.3.0"
+version = "0.3.1"
 description = "Hermes Agent plugin for local Draw Things image generation via gRPC"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "Yuan Chin"}]
 dependencies = [
   "grpcio",
+  "protobuf",
   "flatbuffers",
   "fpzip",
   "numpy",
   "Pillow",
 ]
+
+[tool.setuptools]
+py-modules = ["client", "schemas", "tools"]
+
+[tool.setuptools.packages.find]
+include = ["generated*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

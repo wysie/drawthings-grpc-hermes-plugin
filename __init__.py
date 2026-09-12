@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-try:
+if __package__:
     from . import schemas, tools
-except ImportError:  # Allows pytest/direct import from plugin root.
+else:  # Allows direct execution from the plugin root.
     import schemas  # type: ignore
     import tools  # type: ignore
 
