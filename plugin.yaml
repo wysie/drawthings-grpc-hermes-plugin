@@ -12,3 +12,10 @@ provides_tools:
   - drawthings_list
   - drawthings_generate
 provides_hooks: []
+python_dependencies:
+  - grpcio
+  - protobuf
+  - flatbuffers
+  - fpzip
+  - numpy
+  - Pillow
